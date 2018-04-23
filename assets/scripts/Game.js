@@ -4,6 +4,7 @@ var Definer = require('Definer')
 var Bullet = require('Bullet')
 
 var GameState = cc.Enum({
+    Init: -1,
     Start: -1,
     Run: -1,
     Pause: -1,
@@ -24,31 +25,29 @@ cc.Class({
             default: [],
             type: [Enemy]   // 用 type 指定数组的每个元素都是字符串类型
         },
-        enemyPrefab: cc.Prefab,
-        enemyEnd: -500,
+        enemyGoalX: -1,
 
         definers: {
             default: [],
             type: [Definer]
         },
-        definerPrefab: cc.Prefab,
 
-        state: GameState,
+        healthLabel:cc.Label,
+        health:20,        
     },
     statics: {
         GameState
     },
 
     // LIFE-CYCLE CALLBACKS:
-
     onLoad() {
-        this.initDeiners();
+        
     },
     initDeiners() {
         var info = {
             x: 0,
             x: 0,
-            range: 600,
+            range: 900,
             coolDown: 0.5,
             bulletInfo: {
                 speed: 600,
@@ -59,7 +58,7 @@ cc.Class({
         );
     },
     buildOneDefiners(definerInfo) {
-        var d = cc.instantiate(this.definerPrefab).getComponent(Definer);
+        var d = G.om.newDefiner();
         var defineAreaPos = this.defineArea.getPosition();
         cc.log("add definer");
         cc.log(defineAreaPos);
@@ -71,19 +70,17 @@ cc.Class({
         return d;
     },
     start() {
-        var enemyInfo = {
-            x: 0,
-            y: 100,
-            speed: 300,
-        };
-        this.enemys.push(this.buildOneEnemy(enemyInfo));
+        this.initDeiners();
         this.state = GameState.Run;
+        this.enemyGoalX = this.defineArea.x + this.defineArea.width/2;
+        this.setHealth(this.health);
+        this.buildEnemys();
     },
 
     update(dt) {
-        if (GameState.Run) {
+        if (this.state == GameState.Run) {
             // //build enemys
-            // this.buildEnemys();
+            
             // //移动物体
             this.enemysMove(dt);
             this.bulletsMove(dt);
@@ -92,16 +89,24 @@ cc.Class({
             //检测敌人死亡
             this.enemysDead();
             //发射子弹
-            this.definersFight();
+            this.definersFight(dt);
             //检测敌人是否到达阵地
-            this.enemysReach();
+            this.enemysReach(dt);
         }
     },
     buildEnemys() {
-
+        for(var i =0;i<5;i++){
+            var enemyInfo = {
+                x: 0,
+                y: -200 + 100 * i,
+                speed: 300,
+                hp: Math.random() * 300,
+            };
+            this.enemys.push(this.buildOneEnemy(enemyInfo));
+        }
     },
     buildOneEnemy(enemyInfo) {
-        var e = cc.instantiate(this.enemyPrefab).getComponent(Enemy);
+        var e = G.om.newEnemy();
         e.init(enemyInfo);
         var enemyBuildPos = this.enemyBuild.getPosition();
         this.objectLayer.addChild(e.node);
@@ -130,7 +135,19 @@ cc.Class({
         }
     },
     //检测敌人死亡
-    enemysDead() { },
+    enemysDead() { 
+        var newArr = [];
+        for(var i in this.enemys){
+            var one = this.enemys[i];
+            if(one.isDead()){
+                one.playDead();
+            }
+            else{
+                newArr.push(one);
+            }
+        }
+        this.enemys = newArr;
+    },
     //发射子弹
     definersFight(dt) {
         for (var i in this.definers) {
@@ -146,12 +163,32 @@ cc.Class({
     },
     //检测敌人是否到达阵地
     enemysReach() {
+        var newArr = [];
         for (var i in this.enemys) {
             var one = this.enemys[i];
-            var v = one.getWordPosition();
-            // if( v.x <= this.enemyEnd ){
-            //     one.reach();
-            // }
+            var v = one.node.getPosition();
+            if( v.x <= this.enemyGoalX ){
+                one.reach();
+                this.subHealth(1);
+            }
+            else{
+                newArr.push(one);
+            }
         }
+        this.enemys = newArr;
+    },
+
+    //health control
+    setHealth(h){
+        this.health = h;
+        this.healthLabel.string = "+"+this.health;
+    },
+    addHealth(h){
+        this.health += h;
+        this.healthLabel.string = "+"+this.health;
+    },
+    subHealth(h){
+        this.health -= h;
+        this.healthLabel.string = "+"+this.health;
     },
 });

@@ -1,3 +1,3 @@
 window.G = {
-    
+    om = null,
 };

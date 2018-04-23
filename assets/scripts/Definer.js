@@ -5,11 +5,10 @@ cc.Class({
     extends: cc.Component,
 
     properties: {
-        name : "definer1",
+        definerName : "definer1",
         photo: cc.Node,
         rangeMask: cc.Node,
 
-        bulletPrefab: cc.Prefab,
         bulletInfo:null,
         
         bullets: {
@@ -40,13 +39,7 @@ cc.Class({
         }
     },
     buildBullet(targetEnemy) {
-        let bullet = null;
-        if(cc.pool.hasObject(Bullet)){
-            bullet = cc.pool.getFromPool(Bullet);
-        }
-        else{
-            bullet = cc.instantiate(this.bulletPrefab).getComponent(Bullet);
-        }
+        let bullet = G.om.newBullet();
         bullet.init(this.bulletInfo, targetEnemy);
         this.bullets.push(bullet);
         bullet.node.active = true;
@@ -63,13 +56,13 @@ cc.Class({
             var isHit = one.isHit();
             if(isHit){
                 var isDead = one.damageEnemy();
-                cc.log("deinfer "+ this.name+" kill "+one.targetEnemy.name)
+                cc.log("deinfer "+ this.definerName+" kill "+one.targetEnemy.enemyName);
                 one.afterHit();
             }
             if( one.isOver() ){
                 one.node.active = false;
                 one.node.removeFromParent();
-                cc.pool.putInPool(one);
+                G.om.returnBullet(one);
             }
             else{
                 newBullets.push(one);
@@ -89,7 +82,7 @@ cc.Class({
             for(var i in enemys){
                 var one =  enemys[i];
                 var enemyPos = one.node.getPosition();
-                cc.log(enemyPos);
+                // cc.log(enemyPos);
                 var distinct = mypos.sub(enemyPos).mag();
                 if( distinct <= this.range){
                     cc.log("find enemy");
@@ -104,7 +97,10 @@ cc.Class({
                 this.buildBullet(targetEnemy);
             }
         }
-        else this.coolDownTime -= dt;
+        else {
+            // cc.log(this.coolDownTime);
+            this.coolDownTime -= dt;
+        }
     },
 
     update(dt) {

@@ -1,6 +1,7 @@
 var Enemy = require('Enemy')
 
 var BulletState = cc.Enum({
+    Init: -1,
     Run: -1,
     Over: -1,
 });
@@ -13,7 +14,6 @@ cc.Class({
         hitDistinct: 50,
         targetEnemy: Enemy,
         damage: 100,
-        state:BulletState,
     },
     statics: {
         BulletState
@@ -62,6 +62,6 @@ cc.Class({
     },
     
     isOver(){
-        return this.state == BulletState.Over;
+        return this.state === BulletState.Over;
     }
 });

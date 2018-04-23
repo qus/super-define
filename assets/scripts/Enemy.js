@@ -9,6 +9,7 @@
 //  - [English] http://www.cocos2d-x.org/docs/creator/en/scripting/life-cycle-callbacks.html
 
 var EnemyState = cc.Enum({
+    Init:-1,
     Run: -1,
     Dead: -1,
 });
@@ -18,11 +19,10 @@ cc.Class({
 
     properties: {
         greedBar: cc.Node,
-        name: "enemy1",
+        enemyName: "enemy1",
         speed: 0,
         maxHp :200,
         hp: 200,
-        state: EnemyState,
     },
     statics: {
         EnemyState
@@ -30,13 +30,11 @@ cc.Class({
     // LIFE-CYCLE CALLBACKS:
 
     // onLoad () {},
-
-    start() {
-
-    },
     init(enemyInfo) {
         this.state = EnemyState.Run;
         this.speed = enemyInfo.speed;
+        this.hp = enemyInfo.hp;
+        this.maxHp = enemyInfo.hp;
     },
     hurt(damage) {
         if (this.hp <= damage) {
@@ -49,11 +47,27 @@ cc.Class({
     isDead() {
         return this.state == EnemyState.Dead;
     },
+    playDead(){
+        var anim = this.node.getComponent(cc.Animation);
+        anim.play("EnemyDead");
+    },
+    display(){
+        this.node.removeFromParent();
+        G.om.returnEnemy(this);
+    },
+    reach(){
+        var anim = this.node.getComponent(cc.Animation);
+        anim.play("EnemyReach");
+        this.state = EnemyState.Dead;
+    },
+    
     move(dt) {
         // cc.log(this.speed);
         // cc.log(this.node.x);
         // cc.log(this.node.y);
-        this.node.x -= this.speed * dt;
+        if( this.state === EnemyState.Run){
+            this.node.x -= this.speed * dt;
+        }
     },
     getWordPosition() {
 
